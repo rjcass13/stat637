@@ -15,6 +15,8 @@
 \newcommand{\asto}{\overset{a.s.}{\to}}
 \newcommand{\rthto}{\overset{L^r}{\to}}
 \newcommand{\dto}{\overset{D}{\to}}
+\newcommand{\xtb}{x^{\top}\statvec{\beta}}
+\newcommand{\xitb}{x_i^{\top}\statvec{\beta}}
 % Force all aggregate symbols to always put values above/below
 \let\Oldint=\int
 \let\Oldsum=\sum
@@ -43,7 +45,47 @@
 \newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Point Estimation}
+\section{GLM Overview}
+
+\subsection{Example}
+Normal Regression: $y_i = \beta_0 + \beta_1 x_i + \epsilon_i$: $\epsilon_i \iiddist N(0, \sigma^2)$
+
+Logistic Regression: $y_i \overset{ind}{\sim} Bern(p_i)$: $logit(p_i) = \beta_0 + \beta_1 x_i$, $ log(\frac{p_i}{1-p_i})$
+
+Differences: 
+\begin{itemize}
+    \item Support of $y_i$: $y_i \in \real$ vs. $y_i \in \{0, 1\}$
+    \item Link functions: $g(\mu_i) = \mu_i$ vs. $g(p_i) = log(\frac{p_i}{1-p_i})$
+    \item Likelihoods: $y_i \overset{ind}{\sim} N(\mu_i, \sigma^2)$ vs. $y_i \overset{ind}{\sim} Bern(p_i)$
+\end{itemize}
+
+Similarities:
+\begin{itemize}
+    \item Univariate models
+    \item Exponential families
+    \item Indepdently distributed
+    \item Linear (or otherwise systematic) relationship with a function of $E(y_i)$
+    \item Have link functions
+    \item Assuming that $y_i$ is random
+    \item $\beta$'s are unknown
+\end{itemize}
+    
+
+\subsection{GLMs}
+Generalized Linear Model:
+
+\begin{itemize}
+    \item Random component: $Y_i \sim f(\mu_i)$
+    \item Link component: $g(\mu_i) = \eta_i$
+    \item Systematic component: $\eta_i = \xitb$
+\end{itemize}
+
+We generally use LMs for the following:
+\begin{itemize}
+    \item Inference: understand relationships
+    \item Prediction: hevaior of specific x's
+\end{itemize}
+
 
 
 \end{document}
