@@ -1,0 +1,332 @@
+%\documentclass[twocolumn]{article}\
+\documentclass{article}
+\usepackage{amsmath, amssymb, cancel, mathtools, bm}
+\usepackage[left=.5in, right=.5in, top=1in, bottom=1in]{geometry}
+\usepackage[most]{tcolorbox}
+\usepackage[skip=1em,indent=0pt]{parskip}
+\setlength{\parindent}{0pt}
+\newcommand{\statvec}[1]{\underset{\sim}{\bm{#1}}} % Vector symbol (tilde under vector)
+\DeclareMathOperator{\EX}{\mathbb{E}} % Expected Value symbol
+\DeclareMathOperator{\ext}{\EX_{\theta}} % Expected Value symbol
+\DeclareMathOperator{\vart}{Var_{\theta}} % Expected Value symbol
+\newcommand{\indep}{\perp\!\!\!\!\perp} % Independence symbol
+\newcommand{\real}{\mathbb{R}} % Simplified 'Reals' indicator
+\newcommand{\pto}{\overset{P}{\to}}
+\newcommand{\asto}{\overset{a.s.}{\to}}
+\newcommand{\rthto}{\overset{L^r}{\to}}
+\newcommand{\dto}{\overset{D}{\to}}
+\newcommand{\xtb}{x^{\top}\statvec{\beta}}
+\newcommand{\xitb}{x_i^{\top}\statvec{\beta}}
+% Force all aggregate symbols to always put values above/below
+\let\Oldint=\int
+\let\Oldsum=\sum
+\let\Oldprod=\prod
+\let\Oldbigcup=\bigcup
+\let\Oldbigcap=\bigcap
+\let\Oldlim=\lim
+\renewcommand{\int}{\Oldint\limits} 
+\renewcommand{\sum}{\Oldsum\limits} 
+\renewcommand{\prod}{\Oldprod\limits} 
+\renewcommand{\bigcup}{\Oldbigcup\limits} 
+\renewcommand{\bigcap}{\Oldbigcap\limits} 
+\renewcommand{\lim}{\Oldlim\limits} 
+\newcommand{\infint}{\int_{-\infty}^{\infty}}
+\newcommand{\iiddist}{\overset{\mathrm{iid}}{\sim}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\boldred}[1]{\textbf{\textcolor{red}{#1}}}
+\usepackage[linktoc=all]{hyperref}
+
+\author{RJ Cass}
+\title{STAT 637 - HW 1.6}
+
+\begin{document}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{}
+% Question 1
+
+Propose a reasonable GLM. Specify $Y_i \overset{ind}{\sim} f(u_i), g(u_i) = \eta_i, \eta_i = \bm{x}^{\top}\beta$
+
+(a)
+
+$Y_i \iiddist Bernoulli(u_i)$
+
+$ln(\frac{u_i}{1 - u_i}) = \eta_i$
+
+$\eta_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + \beta_3 x_{3i} + \beta_4 x_{4i}$
+
+\begin{itemize}
+    \item $Y_i$ is an indicator of whether or not the admitted student enrolled
+    \item $u_i$ is the probability that the admitted student enrolls
+    \item $\beta_0$ is the intercept 
+    \item $\beta_{1-4}$ are the corresponding model coefficients (distance from home, scholarship amount, undergrad GPA, attendance of an event)
+    \item $x_{i, 1-4}$ are the values for each individual student
+\end{itemize}
+
+(b)
+
+$Y_i \iiddist Poisson(u_i)$
+
+$ln(u_i) = \eta_i$
+
+$\eta_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + \beta_3 x_{3i}$
+
+\begin{itemize}
+    \item $Y_i$ is the count of birds in an area
+    \item $u_i$ is the expected average number of birds
+    \item $\beta_0$ is the intercept 
+    \item $\beta_{1-3}$ are the corresponding model coefficients (elevation, forest cover, temperature)
+    \item $x_{i, 1-3}$ are the values for each individual area
+\end{itemize}
+
+(c)
+
+$Y_i \iiddist Normal(\mu_i, \sigma^2)$
+
+$\mu_i = \eta_i$
+
+$\eta_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + \beta_3 x_{3i}$
+
+\begin{itemize}
+    \item $Y_i$ is the weight of a tomato
+    \item $\mu_i$ is the expected average weight of tomatoes
+    \item $\sigma^2$ is the population variance
+    \item $\beta_0$ is the intercept 
+    \item $\beta_{1-3}$ are the corresponding model coefficients (fertilizer, water, greenhouse)
+    \item $x_{i, 1-3}$ are the values for each individual plant
+\end{itemize}
+
+(d)
+
+In the tomato scenario, I think there could be an interaction between fertilizer treatment and amount of water used. The new systematic component would be: $\eta_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + \beta_3 x_{3i} + \beta_4 x_{1i}x_{2i}$, where the last term $\beta_4 x_{1i}x_{2i}$ includes the coeffienct of the interaction, and the combination of fertilizer/water for that plant. This interaction answers the question of whether the effect of the amount of water given to a plant on the weight of tomatoes it produces changes depending on the fertilizer treatment used. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{}
+
+(a) \textbf{Essentially unchanged.} The idea of the interactio stays the same and it maintains the same representation in the systematic component. 
+
+(b) \textbf{Essentially unchanged.} Comparing models with and without interactions is common practice. While interpretations might shift a little bit, the idea is the same
+
+(c) \textbf{Carries over but requires modification.} The concept of evaluating the $\beta$'s as expected changes per one unit increase in the value holds, what it's changing does not. In linear regression the link funciton is just the identity so the 'one unit change' directly applies to the output. In logistic, the link function is different so the $\beta$ actually represents  the impact a one unit change has on the probability $\pi_i$
+
+(d) \textbf{Essentially unchanged.} I think this is just excatly what a predicted value is, the expected value of the output given the inputs, right?
+
+(e) \textbf{Does not carry over.} While regular linear models should have normal residuals, due to the discrete nature of logistic regression (output is 1 or 0), the residuals are discretized and non-normal
+
+(f) \textbf{Does not carry over.} Due to the random component being a Bernoulli, each $Y_i$ has a different variance depending on the $\pi_i$ that feeds into it. 
+
+(g) \textbf{Essentially unchanged.} Response can have values of 0 or 1, you better not be getting values that aren't 0 or 1. Predictions should always be within the support of the response variable. If not, you did something wrong. 
+
+(h) \textbf{Essentially unchanged.} This holds in any case I can think of. As with all models, it's only as good as the experimental design, and if there is something happening behind the scenes that wasn't captured, your model also won't be able to identify it.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{}
+
+(a) Number of emergency-room visits during the next year
+
+\begin{enumerate}
+    \item $\mathbb{Z}^{+}$ (positive integers)
+    \item It's discrete
+    \item No, a normal distribution is not reasonable for counts
+    \item Poisson
+    \item Is this the number of visits one person makes to the ER, or is it the number of visitors to one ER in the year?
+\end{enumerate}
+
+(b) Whether a customer defaults on a loan
+
+\begin{enumerate}
+    \item ${0, 1}$
+    \item Probably equal tailed distirbution
+    \item No, this is discrete 0/1 values, not good for normal
+    \item Logistic
+    \item Do we want a predicted output of yes/no whether or not they do default, or an output of the probability that they default?
+\end{enumerate}
+
+(c) Proportion of 100 planted seeds that germinate
+
+\begin{enumerate}
+    \item Integers in $[0, 100]$
+    \item Equal tailed distribution
+    \item Nope, again, discrete outcomes
+    \item Binomial
+    \item What's the initial guess of how many will germinate? Are we expecting extreme values (like only 1 or 2, or all of them), or are we more towards the middle (30-70ish)
+\end{enumerate}
+
+(d) Annual household income
+
+\begin{enumerate}
+    \item $\real^{+}$ (positive reals, although I guess maybe someone could just be in so much debt we'd categorize it as negative? haha)
+    \item Probably very right skewed (hello wealth inequity)
+    \item No, due to the expected heavy tail, not a good fit for normal
+    \item LogNormal (nice heavy tails)
+    \item Maybe some EDA, check if maybe something like a Chi-Squared would better represent the tails
+\end{enumerate}
+
+(e) Number of goals scored by a soccer team in a match
+
+\begin{enumerate}
+    \item $\mathbb{Z}^{+}$ (positive integers)
+    \item It's discrete, but probably low numbers
+    \item No, a normal distribution is not reasonable for counts
+    \item Poisson
+    \item Are PKs counted the same, especially if they go to a shootout?
+\end{enumerate}
+
+(f) A student's score on a 20-question multiple choice test
+
+\begin{enumerate}
+    \item Integers in $[0, 20]$
+    \item Probably left tailed (most do ok, maybe one or two do poorly?)
+    \item Probably not if assuming discrete values
+    \item Binomial
+    \item Is partial credit available?
+\end{enumerate}
+
+(g) Number of days from infection until recovery
+
+\begin{enumerate}
+    \item $\mathbb{Z}^{+}$ (positive integers)
+    \item Long tail (some people might just take a really long time to recover)
+    \item No, discrete, and tails, does not lead to normal
+    \item Geometric
+    \item What determines recovery? And is this like, a months long process, or just a few days?
+\end{enumerate}
+
+(h) Number of emails received by an employee during a workday
+
+\begin{enumerate}
+    \item $\mathbb{Z}^{+}$ (positive integers)
+    \item Again, probably long right tails (the CEO probably gets a LOT more emails than an L1 or something)
+    \item Nope, distinct counts
+    \item Poisson
+    \item Will this include all emails (including responses), or just new email threads?
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{}
+
+(a)
+
+These are fundamentally different because the first model allows for all real values, whereas the second model, due to the Poisson random component, only allows discrete values. They have different support.
+
+(b)
+
+If $Y_i = 0$, the first model is undefined ($ln(0)$ is undefined)
+
+(c)
+
+In the first model, the log-response ($ln(Y_i)$) is assumed to be linear. In the second model, the log-Poission parameter ($ln(u_i)$) is assumed to be linear, not the response. 
+
+(d)
+
+Poisson variance is equal to the mean, so as the conditional mean changes, so does the variance
+
+(e)
+
+If the expected counts are really high, the Poisson model would have a really high variance. Thus, if the expected distribution is a high count, but relatively low variance, the transformed normal might actually be a good fit (also far away from 0 to avoid any issues with boundaries)
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{}
+
+(a) $Y_i \overset{ind}{\sim} N(\mu_i, \sigma^2), \mu_i = \beta_0 + \beta_1 x_i + \beta_2 z_i$
+
+Plausible Study: Length of newborn snakes dependent on type of food provided to the mother, and quantity of water provided. 
+
+\begin{itemize}
+    \item $Y_i$: Length of a newborn snake
+    \item $x_i$: Quantity of water provided
+    \item $z_i$: Type of food provided
+    \item Statement addressed by $\beta_1$: For every one unit increase in the amount of water provided, how much does the length of a newborn snake change?
+\end{itemize}
+
+(b) $Y_i \overset{ind}{\sim} Bernoulli(\pi_i), logit(\pi_i) = \beta_0 + \beta_1 x_i + \beta_2 z_i$
+
+Plausible Study: Whether or not a snake egg hatches correctly dependent on type of food provided to the mother, and quantity of water provided. 
+
+\begin{itemize}
+    \item $Y_i$: Whether or not the egg hatches correctly (yes/no)
+    \item $x_i$: Quantity of water provided
+    \item $z_i$: Type of food provided
+    \item Statement addressed by $\beta_1$: For every one unit increase in the amount of water provided, how much does the likelihood of the egg hatching correctly change?
+\end{itemize}
+
+(c) $Y_i \overset{ind}{\sim} Poisson(\mu_i), log(\mu_i) = \beta_0 + \beta_1 x_i + \beta_2 z_i$
+
+Plausible Study: Number of eggs laid by a snake dependent on type of food provided to the mother, and quantity of water provided. 
+
+\begin{itemize}
+    \item $Y_i$: Number of eggs laid
+    \item $x_i$: Quantity of water provided
+    \item $z_i$: Type of food provided
+    \item Statement addressed by $\beta_1$: For every one unit increase in the amount of water provided, how much does the expected number of eggs laid change?
+\end{itemize}
+
+(d)
+
+They all have the same systematic component. The randomness in each model also comes from the random component. 
+
+(e)
+
+They all have different link functions and random components. This means the interpretation of the 'linear' portion changes as well. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{}
+
+(a) Binary
+
+\begin{itemize}
+    \item Response Variable: Whether a boxer wins their fight or not
+    \item Observable Unit: Victory (yes/no)
+    \item Plasuible Explanatory Variables: Weight, Height, hours trained, jab strength
+    \item Candidate Response Distribution: Bernoulli
+    \item Candidate Link Function: Logistic
+    \item GLM: $Y_i \iiddist Bernoulli(\pi_i), logit(\pi) = \eta_i, \eta_i = \beta_0 + \beta_1 x_i + ...$
+    \item Question the model would answer: how can we best predict whether a boxer will win their match
+    \item Reason the GLM might be inadequate: There could be interactions between variables which would require us to revisit the systematic component.
+\end{itemize}
+
+(b) Count
+
+\begin{itemize}
+    \item Response Variable: Number of fish caught in 1 hour
+    \item Observable Unit: A fish
+    \item Plasuible Explanatory Variables: Lure/bait type, location, time of day
+    \item Candidate Response Distribution: Poisson
+    \item Candidate Link Function: Log
+    \item GLM: $Y_i \iiddist Poisson(\pi_i), ln(\pi) = \eta_i, \eta_i = \beta_0 + \beta_1 x_i + ...$
+    \item Question the model would answer: What factors most influence how many fish are caught in an hour
+    \item Reason the GLM might be inadequate: If I'm really bad at fishing and don't catch anything haha. But actually, I imagine there would be heavy interactions between bait type and location, etc. 
+\end{itemize}
+
+(c) Normal might be questionable
+
+\begin{itemize}
+    \item Response Variable: Household Incomes in Utah
+    \item Observable Unit: Income for one household
+    \item Plasuible Explanatory Variables: Education, Race, Industry
+    \item Candidate Response Distribution: Normal
+    \item Candidate Link Function: Identity
+    \item GLM: $Y_i \iiddist Normal(\mu_i, \sigma^2), \mu_i = \eta_i, \eta_i = \beta_0 + \beta_1 x_i + ...$
+    \item Question the model would answer: What demographic features are most correlated with higher incomes in Utah
+    \item Reason the GLM might be inadequate: We would expect income to potentially have a large right tail. In that case, normal might not be the best fit (though we could truncate the data to only the lower 90\% or something).
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{}
+
+Logistic regression makes more sense in this situation because while the normal linear regression could provide likelihoods of a customer renewing, the logistic regression will actually directly provide a yes/no prediction as to whether the customer will renew. It is also likely that a normal linear regression model fit to these data will not be able to meet the required assumptions, where as the logistic regression should be able to meet required assumptions. 
+
+\end{document}
