@@ -169,14 +169,68 @@ $Var(y) = \frac{\frac{1}{(1-\pi)^2}\frac{r}{\pi} - \frac{r}{\pi^2}\frac{1}{1-\pi
 
 Poisson: $Var(Y) = \EX[Y]$
 
-Binomial: $Var(Y) = \EX[Y](1-p)$
+Binomial: $Var(Y) = \EX[Y] - \frac{\EX[Y]^2}{n}$
 
-Negative Binomial: $Var(Y) = \frac{\EX[Y]}{p}$
+Negative Binomial: $Var(Y) = \EX[Y] + \frac{\EX[Y]^2}{r}$
 
 (a) These models differ in a ratio of the 'success' parameter. In Poisson, the mean equals the variance, but in Binomial the variance is always smaller than the mean, and Negative Binomial the variance is larger. 
 
 (b) Poisson may be inappropriate in samples where $\EX[Y]$ is very large, because this would also result in a very large variance. 
 
 (c) If the variability is larger than the mean, I would look into a Negative Binomial because it has a variance larger than the mean. 
+
+(d) Comparing the mean/variance can help you see whether one of the above three could be a reasonable fit, based on if they're greater, equal, or smaller than eachother. However, there are plenty of models that have different values for the mean and variance (even just a normal could have variance bigger, or variance smaller, or even something like a tied up normal where the mean and variance are connected).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{}
+
+Gamma: $Var(Y) = \frac{\EX[Y]^2}{a}$
+
+(a) For athe Possion, the Variance changes linearly, but for the others they all change quadratically
+
+(b) Well, the Poisson is linear, and I found online that certain parameterizations of the Negative Binomial can be linear as well
+
+(c) Binomial, Negative Binomial (standard version), and Gamma
+
+(d) We need to make sure the model accounts for the expected relationship there: say we collect data from a population where the variance increases linearly with the mean, and try to fit a model where the variance scales faster than the mean, when we try to do predictions our intervals will be way too big, etc.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{}
+
+$f(y;\theta) = \theta y^{-\theta-1} = \theta e^{-\theta ln(y)-ln(y)}$
+
+$c(\theta) = ln(a(\theta)) = ln(\theta), w(\theta) = \theta, t(y) = -ln(y)$
+
+$c'(\theta) = \frac{1}{\theta}, w'(\theta) = 1$
+
+$c''(\theta) = -\frac{1}{\theta^2}, w''(\theta) = 0$
+
+Score: $U = \frac{\partial l(\theta;y)}{\partial \theta} = w'(\theta)t(y) + c'(\theta) = 1(-ln(y)) + \frac{1}{\theta} = \frac{1}{\theta} - ln(y)$
+
+Information: $\mathbb{I} = Var(u) = -\EX[\frac{\partial^2 l(\theta;y)}{\partial \theta^2}] = -\EX[\frac{\partial l(\theta;y)}{\partial \theta} w'(\theta)t(y) + c'(\theta)] = -\EX[w''(\theta)t(y) + c''(\theta)] = -\EX[-\frac{1}{\theta^2}] = \frac{1}{\theta^2}$
+
+$\EX[ln(y)] = \int_{0}^\infty \theta y^{-\theta-1}ln(y) dy$
+
+Let $x = ln(y) \implies y = e^x \implies dy = e^x dx$
+
+Substitue in, we get: $\int_{0}^\infty \theta y^{-\theta-1}ln(y) dy = \int_0^{\infty} \theta x e^{-\theta x}$ which is the exponential mean: $\frac{1}{\theta}$
+
+$\EX_y[U] = \EX[\frac{1}{\theta} - ln(y)] = \frac{1}{\theta} - \EX[ln(y)] = \frac{1}{\theta} - \frac{1}{\theta}$
+
+What feature meakes it easy? Ummm, not too sure, it wasn't too easy. I guess just the fact that it is part of the exponential family?
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{}
+
+While they are different tools that software can fit for you, understanding what they are doing on the backend is pivotal to using them correctly. By knowing they come from the same family, we're able to be creative in how we use them such as performing transformations on certain aspects of the model. For example, using a Poisson regression assumes that the variance of the data is equal to the mean of the data, where as a logistic regression allows them to be separate. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{AI Disclosure}
+
+I used AI/google searching for Problem 4 to (1) ensure I had the correct score and information and (2) help me figure out the integral/substitution for $\EX[ln(y)]$
 
 \end{document}
