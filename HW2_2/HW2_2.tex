@@ -1,0 +1,182 @@
+%\documentclass[twocolumn]{article}\
+\documentclass{article}
+\usepackage{amsmath, amssymb, cancel, mathtools, bm}
+\usepackage[left=.5in, right=.5in, top=1in, bottom=1in]{geometry}
+\usepackage[most]{tcolorbox}
+\usepackage[skip=1em,indent=0pt]{parskip}
+\setlength{\parindent}{0pt}
+\newcommand{\statvec}[1]{\underset{\sim}{\bm{#1}}} % Vector symbol (tilde under vector)
+\DeclareMathOperator{\EX}{\mathbb{E}} % Expected Value symbol
+\DeclareMathOperator{\ext}{\EX_{\theta}} % Expected Value symbol
+\DeclareMathOperator{\vart}{Var_{\theta}} % Expected Value symbol
+\newcommand{\indep}{\perp\!\!\!\!\perp} % Independence symbol
+\newcommand{\real}{\mathbb{R}} % Simplified 'Reals' indicator
+\newcommand{\pto}{\overset{P}{\to}}
+\newcommand{\asto}{\overset{a.s.}{\to}}
+\newcommand{\rthto}{\overset{L^r}{\to}}
+\newcommand{\dto}{\overset{D}{\to}}
+\newcommand{\xtb}{x^{\top}\statvec{\beta}}
+\newcommand{\xitb}{x_i^{\top}\statvec{\beta}}
+% Force all aggregate symbols to always put values above/below
+\let\Oldint=\int
+\let\Oldsum=\sum
+\let\Oldprod=\prod
+\let\Oldbigcup=\bigcup
+\let\Oldbigcap=\bigcap
+\let\Oldlim=\lim
+\renewcommand{\int}{\Oldint\limits} 
+\renewcommand{\sum}{\Oldsum\limits} 
+\renewcommand{\prod}{\Oldprod\limits} 
+\renewcommand{\bigcup}{\Oldbigcup\limits} 
+\renewcommand{\bigcap}{\Oldbigcap\limits} 
+\renewcommand{\lim}{\Oldlim\limits} 
+\newcommand{\infint}{\int_{-\infty}^{\infty}}
+\newcommand{\iiddist}{\overset{\mathrm{iid}}{\sim}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\boldred}[1]{\textbf{\textcolor{red}{#1}}}
+\usepackage[linktoc=all]{hyperref}
+
+\author{RJ Cass}
+\title{STAT 637 - HW 2.2}
+
+\begin{document}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{}
+
+Show that the following distributions belong to the exponential family. For each distribution, identify: a natural parameter, a sufficient statistic, the mean, and the variance using the equations shown in class
+
+Exponential Family: $f(y; \theta) = a(\theta)b(y)exp\{\sum_{j=1}^k w_j(\theta) t_j(y) \}$
+
+Where $c(\theta) = ln(a(\theta))$:
+
+Mean: $\EX(t(y)) = -\frac{c'(\theta)}{w'(\theta)}$
+
+Var: $Var(t(y)) = \frac{w''(\theta)c'(\theta) - w'(\theta)c''(\theta)}{(w'(\theta))^3}$
+
+(a) Gamma with unknown rate $\beta$, fixed $\alpha$: $f(y; \beta) = \frac{\beta^{\alpha}}{\Gamma(\alpha)}y^{\alpha-1}e^{-y\beta}$
+
+Exponential Family: 
+\begin{itemize}
+    \item $a(\beta) = \frac{\beta^{\alpha}}{\Gamma(\alpha)}$
+    \item $b(y) = y^{\alpha-1}$
+    \item $w_1(\beta) = \beta$
+    \item $t_1(y) = -y$
+\end{itemize}
+
+Natural Parameter: $\eta = \beta$
+
+Sufficient statistic: $T(y) = \sum y$
+
+Mean: 
+
+\begin{quote}
+$c'(\beta) = \frac{d}{d \beta} ln(\frac{\beta^{\alpha}}{\Gamma(\alpha)}) = \frac{d}{d \beta} \alpha ln(\beta) - ln(\Gamma(\alpha)) = \frac{\alpha}{\beta}$
+
+$w'(\beta) = \frac{d}{d \beta} \beta = 1$
+
+$\EX[y] = -(-1)\frac{\frac{\alpha}{\beta}}{1} = \frac{\alpha}{\beta}$
+\end{quote}
+
+Variance: 
+
+\begin{quote}
+$c''(\beta) = \frac{d}{d \beta} \frac{\alpha}{\beta} = -\frac{\alpha}{\beta^2}$
+
+$w''(\beta) = \frac{d}{d \beta} 1 = 0$
+
+$Var(y) = \frac{0 - 1(-\frac{\alpha}{\beta^2})}{1^3} = \frac{\alpha}{\beta^2}$
+\end{quote}
+
+(b) Poisson: $f(y; \lambda) = \frac{\lambda^y}{y!}e^{-\lambda}$
+
+$\lambda^y = e^{y ln(\lambda)} \implies f(y; \lambda) = \frac{1}{y!}e^{-\lambda + yln(\lambda)}$
+
+Exponential Family: 
+\begin{itemize}
+    \item $a(\lambda) = 1$
+    \item $b(y) = \frac{1}{y!}$
+    \item $w_1(\lambda) = \lambda, w_2(\lambda) = ln(\lambda)$
+    \item $t_1(y) = -1, t_2(y) = y$
+\end{itemize}
+
+Natural Parameter: $\eta = (\lambda, ln(\lambda))$
+
+Sufficient statistic: $T(y) = \sum y$
+
+Mean: 
+
+\begin{quote}
+$c'(\lambda) = \frac{d}{d \lambda} ln(1) = 1$
+
+$w'(\lambda) = \frac{d}{d \lambda} ln(\lambda) = \frac{1}{\lambda}$
+
+$\EX[y] = \frac{1}{\frac{1}{\lambda}} = \lambda$
+\end{quote}
+
+Variance: 
+
+\begin{quote}
+$c''(\lambda) = \frac{d}{d \lambda} 1 = 0$
+
+$w''(\lambda) = \frac{d}{d \lambda} \frac{1}{\lambda} = -\frac{1}{\lambda^2}$
+
+$Var(y) = \frac{-\frac{1}{\lambda^2} - 0}{(-\frac{1}{\lambda})^3} = \frac{\frac{1}{\lambda^2}}{\frac{1}{\lambda^3}} = \lambda$
+\end{quote}
+
+(c) Negative Binomial with fixed $r$: $f(y; \pi) = \binom{y+r-1}{r-1} \pi^r (1-\pi)^y$
+
+$(1-\pi)^y = e^{yln(1-\pi)} \implies f(y; \pi) = \binom{y+r-1}{r-1} \pi^r e^{yln(1-\pi)}$
+
+Exponential Family: 
+\begin{itemize}
+    \item $a(\pi) = \pi^r$
+    \item $b(y) = \binom{y+r-1}{r-1}$
+    \item $w_1(\pi) = ln(1-\pi)$
+    \item $t_1(y) = y$
+\end{itemize}
+
+Natural Parameter: $\eta = ln(1-\pi)$
+
+Sufficient statistic: $T(y) = \sum y$
+
+Mean: 
+
+\begin{quote}
+$c'(\pi) = \frac{d}{d \pi} ln(\pi^r) = \frac{d}{d \pi} r ln(\pi) = \frac{r}{\pi}$
+
+$w'(\pi) = \frac{d}{d \pi} ln(1-\pi) = -\frac{1}{1-\pi}$
+
+$\EX[y] = -\frac{\frac{r}{\pi}}{-\frac{1}{1-\pi}} = \frac{r (1-\pi)}{\pi}$
+\end{quote}
+
+Variance: 
+
+\begin{quote}
+$c''(\pi) = \frac{d}{d \pi} \frac{r}{\pi} = -\frac{r}{\pi^2}$
+
+$w''(\pi) = \frac{d}{d \pi} -\frac{1}{1-\pi} = \frac{1}{(1-\pi)^2}$
+
+$Var(y) = \frac{\frac{1}{(1-\pi)^2}\frac{r}{\pi} - \frac{r}{\pi^2}\frac{1}{1-\pi}}{(\frac{1}{1-\pi})^3} = \frac{r(1-\pi)^3}{\pi^2 (1-\pi)^2} = \frac{r(1-\pi)}{\pi^2}$
+\end{quote}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{}
+
+Poisson: $Var(Y) = \EX[Y]$
+
+Binomial: $Var(Y) = \EX[Y](1-p)$
+
+Negative Binomial: $Var(Y) = \frac{\EX[Y]}{p}$
+
+(a) These models differ in a ratio of the 'success' parameter. In Poisson, the mean equals the variance, but in Binomial the variance is always smaller than the mean, and Negative Binomial the variance is larger. 
+
+(b) Poisson may be inappropriate in samples where $\EX[Y]$ is very large, because this would also result in a very large variance. 
+
+(c) If the variability is larger than the mean, I would look into a Negative Binomial because it has a variance larger than the mean. 
+
+\end{document}

@@ -32,6 +32,7 @@
 \renewcommand{\lim}{\Oldlim\limits} 
 \newcommand{\infint}{\int_{-\infty}^{\infty}}
 \newcommand{\iiddist}{\overset{\mathrm{iid}}{\sim}}
+\newcommand{\inddist}{\overset{\mathrm{ind}}{\sim}}
 \newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 \newcommand{\boldred}[1]{\textbf{\textcolor{red}{#1}}}
 \usepackage[linktoc=all]{hyperref}
@@ -87,5 +88,57 @@ We generally use LMs for the following:
 \end{itemize}
 
 
+\subsection{Poisson Regression}
+
+$Y_i \inddist Poisson(\mu_i), log(\mu_i) = x_i^{\top}\beta$
+
+Assumptions: 
+\begin{itemize}
+    \item Linearity
+    \item Independence
+    \item Poisson distribution on response var
+\end{itemize}
+
+
+\subsection{Exponential Family Calculations}
+
+With the Exponential Family log-likelihood written as: $l(\theta; y) = w(\theta)t(y) + ln(a(\theta)) + ln(b(y))$ where $ln(a(\theta)) = c(\theta)$ and $ln(b(y)) = d(y)$:
+
+$Score = w'(\theta)t(y) + c'(\theta)$
+
+$\EX[t(y)] = -\frac{c'(\theta)}{w'(\theta)}$
+
+$Var(t(y)) = \frac{w''(\theta)c'(\theta) - w'(\theta)c''(\theta)}{(w'(\theta)^3)}$
+
+\underline{Example}: Poisson: $f(y; \lambda) = \frac{\lambda^y e^{-\lambda}}{y!} = exp\{yln(\lambda - \lambda - ln(y!))\}$
+
+In this case, $c(\lambda) = -\lambda$ and $w(\lambda) = ln(\lambda)$
+
+Sufficient Statistic: $t(y) = y$
+
+$w'(\lambda) = \frac{1}{\lambda}, w''(\lambda) = -\frac{1}{\lambda^2}, c'(\lambda) = -1, c''(\lambda) = 0$
+
+Mean: $\EX[t(y)] = \EX[y] = -\frac{c'(\lambda)}{w'(\lambda)} = -\frac{1}{\frac{-1}{\lambda}} = \lambda$
+
+Variance: $Var(t(y)) = Var(y) = \frac{w''(\lambda)c'(\lambda) - w'(\lambda)c''(\lambda)}{(w'(\lambda))^3} = \frac{(-1)(-\frac{1}{\lambda^2}) - 0}{\frac{1}{\lambda^3}} = \frac{\frac{1}{\lambda^2}}{\frac{1}{\lambda^3}} = \lambda$
+
+Score: $w'(\theta)t(y) + c'(\theta) = (\frac{1}{\lambda})y + (-1)$. Verify $\EX[Score] = 0: \EX[\frac{1}{\lambda}y-1] = \frac{1}{\lambda}\EX[y] - 1 = \frac{\lambda}{\lambda} - 1 = 0$
+
+\subsection{Link Function}
+
+$\eta_i = g(\mu_i)$
+
+Requirements (all with respect to the mean $\mu$, not $x$):
+\begin{itemize}
+    \item One-to-One ($g(a) = g(b) \implies a=b$)
+    \item Monotone (Monotone increasing means $a >b \implies g(a) > g(b)$)
+    \item Continuous and differentiable ($lim_{\mu \to c}g(\mu) = g(c)$)
+\end{itemize}
+
+Canonical Link: $g*(w(\theta_i)) = w(\theta_i)$
+
+Example, 
+
+Binomial: $w(\pi_i) = log(\frac{\pi_i}{1-\pi_i}) \implies g(\pi_i) = log(\frac{\pi_i}{1-\pi_i}), g*(w(\pi_i)) = w(\pi_i)$
 
 \end{document}
