@@ -1,0 +1,201 @@
+---
+title: "GLM Model-Fit Forensics"
+author: "STAT 637"
+date: "September 21, 2026"
+format:
+  html:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+Dr. Berrett used Codex GPT-5.6 Luna to create this initial file and to suggest unique data sets for each team.  She then did extensive editing (sometimes using Claude Sonnet 5 in Positron for generalizing formulation) and checking to makes sure the activity examined the content in the way the course needs. 
+
+## Activity goal
+
+Act as a statistical consultant deciding whether a predictor should remain in a generalized linear model. Use the assigned data set to compare two nested models and deliver a one-minute model-fit verdict.
+
+Your report should show how coefficient uncertainty, deviance comparisons, hypothesis tests, and residual diagnostics support the decision.
+
+## Partnership assignments
+
+| Pair | Partners | Assigned data set | Response | Candidate predictor |
+|---:|---|---|---|---|
+| 1 | Jarom and Andrew | `MASS::birthwt` | `low` | `smoke` |
+| 2 | Anna and Brylee | `datasets::InsectSprays` | `count` | `spray` |
+| 3 | Nathan and Shae | `datasets::esoph` | `cbind(ncases, ncontrols)` | `tobgp` |
+| 4 | RJ and Brett | `MASS::quine` | `Days` | `Eth` |
+| 5 | Tyler and Caleb | `datasets::mtcars` | `mpg` | `wt` |
+| 6 | Bracken and Dallin | `MASS::Insurance` | `Claims` | `Group` |
+
+All assigned data sets are available directly from R or the standard `MASS` package. No local teaching-folder files are required.
+
+## Workflow
+
+### Identify the modeling question
+
+Discuss: description of the response variable, the scientific or practical question, and the predictor whose contribution you will investigate.
+
+```{r datasetup}
+# Replace these placeholders with your partnership's assigned values from the table.
+data_obj <- MASS::Insurance
+response <- "cbind(Claims, Holders-Claims)"
+candidate_predictor <- "Group"
+fam <- "binomial"
+```
+
+:::{.callout-note}
+This specific data set contains the number of claims for each group, district, and age classification.  Note that it also contains the number of holders.  Because the range of the proportion of policy-holders submitting claims is generally small, we could use the Poisson likelihood (remember the Poisson-binomial connection from your probability classes?).  I'm going to go ahead and fit a logistic regression model.  In class we discussed using just a single covariate: group.  Group is an ordered factor describing the type of car ($\lt 1$ liter, $1-1.5$ liters, $1.5-2$ liters, and $\gt 2$).  We will treat group as a four-level factor.
+:::
+
+### Prepare the data
+
+Document recoding, missing-value handling, filtering, and any transformations. Explain why the selected response distribution is reasonable.
+
+```{r}
+# Example only. Adapt to your data set.
+library(MASS)
+dat <- data_obj
+```
+
+:::{.callout-note}
+No additional recoding or transformations are needed.  Apologies for the confusion this section caused in class.  See above for why the binomial distribution is reasonable.  
+:::
+
+### Fit two nested models
+
+Fit a reduced model without the candidate predictor and a full model that includes it. Keep the response distribution and link function the same when comparing the models.
+
+```{r mods}
+library(stats)
+
+# reformulate() builds the formula from the *values* of response and
+# candidate_predictor, rather than using those names literally.
+mod0 <- glm(
+  reformulate("1", response = response),
+  data = dat,
+  family = fam
+)
+
+mod1 <- glm(
+  reformulate(candidate_predictor, response = response),
+  data = dat,
+  family = fam
+)
+
+summary(mod0)
+summary(mod1)
+```
+
+:::{.callout-note}
+Initial things to notice: 
+
+Notice in "mod0" that the null deviance and the residual deviance are the same.  This will always be the case.  Also from the null model, the intercept estimate is negative, indicating that *not* submitting a claim is more likely than submitting a claim. 
+
+Looking at the summary table for "mod1", it looks like there is initial evidence that group "L" (1-1.5 liters) is different from the base group (<1 liter).  However, the other group levels do not show that same evidence.
+
+I'll leave parameter interpretation for the next section.
+:::
+
+### Quantify coefficient uncertainty
+
+For the candidate coefficient, report the estimate, standard error, covariance information, and a confidence interval. Explain what the interval says in the scale of the linear predictor or response model.
+
+```{r}
+coef(summary(mod1))
+vcov(mod1)
+summary(mod1)$cov.scaled
+confint(mod1)
+
+## CB Added a check for the coefficient confidence intervals: it looks like confint is still doing an approximation here, so make sure to compute these by hand
+coef(mod1)[2] + qnorm(.975)*sqrt(vcov(mod1)[2,2])*c(-1, 1)
+```
+
+:::{.callout-note}
+Record:
+
+- candidate coefficient estimate: `r coef(mod1)`
+- standard error: `r sqrt(diag(vcov(mod1)))`
+- relevant covariance entry or matrix: `vcov(mod1)`
+- confidence intervals: 
+```{r coefs, echo=FALSE}
+    print(data.frame(lower=coef(mod1) - qnorm(.975)*sqrt(diag(vcov(mod1))), upper=coef(mod1) + qnorm(.975)*sqrt(diag(vcov(mod1)))))
+```
+- coefficient interpretation: The intercept represents the log odds of making an insurance claim for the less than one liter cars.  The other coefficients represents the *change* (from the intercept) in the log odds of making an insurance claim for the other three car groups.  
+:::
+
+
+
+### Compare model fit with deviance
+
+Compute the difference in deviance and use it to test whether the full model improves fit relative to the reduced model.
+
+```{r}
+deviance(mod0)
+deviance(mod1)
+delta_deviance <- deviance(mod0) - deviance(mod1)
+delta_deviance
+
+anova(mod0, mod1)
+```
+
+State the null and alternative hypotheses, test statistic, degrees of freedom, p-value, and conclusion in context.
+
+:::{.callout-note}
+\begin{align*}
+H_0: &{ \mbox{ } \beta_1 = \beta_2 = \beta_3 = 0}\\
+H_1: &{ \text{ At least one } \beta_i \neq 0, \mbox{ for } i = 1, 2, 3}\\
+\end{align*}
+$\Delta D = `r delta_deviance`$; which follows a $\chi^2$ distribution with $k = 3$ degrees of freedom.  The p-value is `r 1-pchisq(delta_deviance, 3)`.  Indicating that there is evidence that it is worth including the factor "group" in the model.  
+:::
+
+### Compare residuals
+
+Compare at least two residual types. Include standardized residuals and identify observations that deserve investigation.
+
+```{r}
+residual_summary <- data.frame(
+  fitted = fitted(mod1),
+  raw = residuals(mod1, type = "response"),
+  pearson = residuals(mod1, type = "pearson"),
+  deviance = residuals(mod1, type = "deviance"),
+  standardized = rstandard(mod1) #standardized *pearson* residuals
+)
+
+head(residual_summary)
+
+par(mfrow=c(2,2))
+plot(mod1)
+```
+
+Very briefly, discuss:
+
+- why multiple residual types are available for GLMs;
+- why standardization is useful;
+- whether the residuals reveal lack of fit, unusual observations, or influential cases.
+
+:::{.callout-note}
+- There are different types of residuals for GLMs because of the variety of likelihoods.  Notice that the different residuals scale the typical residual ($y-\hat{\mu}$) in different ways: scaling by the standard deviation, scaling by the derivative of the link function, scaling by the leverages, etc.  
+- Leverage tells us when an observation is in a range of $x$ values that is sparsely observed (high leverage values).  Thus, scaling residuals by $1-\mbox{leverage}$ means that when leverage is high, we divide by a smaller number (less than 1), making the residual larger.  Thus, standardized residuals that are large in magnitude indicate potential model-fitting issues. 
+- All pearson residuals are between -3 and 5 (we'd expect them to be in this range, with most being between -3 and 3). The qq-plot of standardized residuals shows some deviation from normality in the tails, but I'm not too worried about these because there aren't that many and the normality assumption is only asymptotic.
+- Side note: If the residuals were large (i.e., several outside the range of -3 and 3), this would indicate very strong lack of fit.  We can try to correct this by reducing the variance (i.e., adding more useful covariates to account for the variation) or by allowing for a larger variance likelihood (e.g., modeling the counts themselves using a Poisson or negative binomial likelihood, or fitting an overdispersed binomial model).
+:::
+
+## One-minute model-fit verdict
+
+Use this structure for your team's one-minute presentation:
+
+1. **Question:** What were you trying to learn?
+2. **Models:** What differed between the reduced and full models?
+3. **Evidence:** What did the coefficient interval, deviance test, and residuals show?
+4. **Verdict:** Keep the candidate predictor, remove it, or gather better data. Explain why.
+
+:::{.callout-note}
+1. **Question:** We were trying to learn whether claim proportions were different between car types. 
+2. **Models:** We only compared a model with and without the predictor (car type).  
+3. **Evidence:** The coefficient intervals, deviance test, and residuals provided evidence that it's worth including car type in the model.  However, the coefficient intervals for two car types contained zero and so it would be worth considering other models. 
+4. **Verdict::** If this is all we have time for, keep car type in the model as is.  If there is additional time/resources, consider other models (i.e., other combinations of car-type groups and/or other predictors). 
+:::

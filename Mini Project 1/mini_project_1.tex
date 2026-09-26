@@ -1,0 +1,78 @@
+%\documentclass[twocolumn]{article}\
+\documentclass{article}
+\usepackage{amsmath, amssymb, cancel, mathtools, bm}
+\usepackage[left=.5in, right=.5in, top=1in, bottom=1in]{geometry}
+\usepackage[most]{tcolorbox}
+\usepackage[skip=1em,indent=0pt]{parskip}
+\setlength{\parindent}{0pt}
+\newcommand{\statvec}[1]{\underset{\sim}{\bm{#1}}} % Vector symbol (tilde under vector)
+\DeclareMathOperator{\EX}{\mathbb{E}} % Expected Value symbol
+\DeclareMathOperator{\ext}{\EX_{\theta}} % Expected Value symbol
+\DeclareMathOperator{\vart}{Var_{\theta}} % Expected Value symbol
+\newcommand{\indep}{\perp\!\!\!\!\perp} % Independence symbol
+\newcommand{\real}{\mathbb{R}} % Simplified 'Reals' indicator
+\newcommand{\pto}{\overset{P}{\to}}
+\newcommand{\asto}{\overset{a.s.}{\to}}
+\newcommand{\rthto}{\overset{L^r}{\to}}
+\newcommand{\dto}{\overset{D}{\to}}
+\newcommand{\xtb}{x^{\top}\statvec{\beta}}
+\newcommand{\xitb}{x_i^{\top}\statvec{\beta}}
+% Force all aggregate symbols to always put values above/below
+\let\Oldint=\int
+\let\Oldsum=\sum
+\let\Oldprod=\prod
+\let\Oldbigcup=\bigcup
+\let\Oldbigcap=\bigcap
+\let\Oldlim=\lim
+\renewcommand{\int}{\Oldint\limits} 
+\renewcommand{\sum}{\Oldsum\limits} 
+\renewcommand{\prod}{\Oldprod\limits} 
+\renewcommand{\bigcup}{\Oldbigcup\limits} 
+\renewcommand{\bigcap}{\Oldbigcap\limits} 
+\renewcommand{\lim}{\Oldlim\limits} 
+\newcommand{\infint}{\int_{-\infty}^{\infty}}
+\newcommand{\iiddist}{\overset{\mathrm{iid}}{\sim}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\boldred}[1]{\textbf{\textcolor{red}{#1}}}
+\usepackage[linktoc=all]{hyperref}
+
+\author{RJ Cass}
+\title{STAT 637 - HW 2.2}
+
+\begin{document}
+
+\maketitle
+
+\section{}
+
+1. Page 372, they described the structure of the GLM as having a dependent variable, the indepdendent variables, and a link function. This is pretty similar to how we described it as a random component, the systematic component (which they somewhat mention previously as well), and a link function.
+
+2. I thought the way they generalized the nuisance parameter on page 371 made a lot of sense. So far in class we haven't really addressed the nuisance parameters (for example in the HW we ignored one of the gamma parameters), but how they wrote it out made it clear of how it fits in. It's really easy for me to see how it looks exactly like the normal distribution, for example. 
+
+3. I recognized the specific distribution examples they started going through on page 378 (such as the Poisson distribution). We went through similar derivations for the likelihood and even coded up the steps to find the MLe, etc. 
+
+\section{}
+
+I thought it interesting how in page 372 they specifically mention a 'notation suitable for computer use'. Frankly, I feel like we no longer have separate notations for computer use vs. what we do in on paper. With R it's pretty easy to directly translate from paper to program without much thinking, whereas I'm sure in the past it took a lot more effort to think through vector/matrix setups to ensure everything was conformable, etc. 
+
+\section{}
+
+Learning about the Likelihood test, espcially going over it in class this week, helped me understand what the authors were talking about on pages 375-376. Understanding what the ratio of 2 likelihoods means (ie. if it's big vs. small) meant I was able to understand the conditions for Table 1 where they outline how they would compare the models, etc. 
+
+\section{}
+
+On pge 381 they talk about the blocking methods used to find the sum of squares and stuff, which frankly, went a bit over my head. We've talked a little bit about this idea of blocking with covariance matrices (Compound Symmetric) in 537, but I'm not very familiar with this idea of 'Blocks (eleiminating varieties)' stuff that they mentioned. 
+
+\section{}
+
+Dallin mentioned how the paper talked about analysis of Deviance (as part of the likelihood tests), which we did go over in class as well. 
+
+They mentioned the idea of calculating inverse polynomials (which to be fair is tough manually), but computers can do that almost trivially. They also mentioned using a computing facility with a punch card, which isn't very applicable anymore (though we do have supercomputer facilities now-a-days).
+
+My group also did not understand the blocking content, and we're still not clear on what that's supposed to be saying/indicating. We also discussed the proof with the nuisance variable, which felt similar to what we did in class, but much more complicated. 
+
+\section{}
+
+Actually, talking about it with someone helped a lot. We all noticed/caught different things, meaning once we came together on it I learned even more than I did on my own. I think I would also do a quicker 'skim' of the full article before trying to just dive in and actually directly read through it all. That was tough and I felt like I hit some walls. 
+
+\end{document}

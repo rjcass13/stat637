@@ -1,0 +1,227 @@
+---
+title: "Bernoulli Link Comparison"
+date: "September 25, 2026"
+format:
+  html:
+    code-fold: true
+knitr:
+  opts_chunk:
+    warning: false
+---
+
+The goals of this activity are to: 
+
+1. Examine the behavior of the different link functions;  
+2. Conduct model selection across four different link functions for binary data; and
+3. Estimate confidence intervals for the probabilities.
+
+## Prepare Inverse Link Functions
+
+We model, 
+$$
+Y_i \stackrel{ind}{\sim}\mbox{Bern}(\pi_i)
+$$
+$$
+g_j(\pi_i) = \eta_i
+$$
+$$
+\eta_i = x_i\beta
+$$
+
+- logit link: $g_1(\pi_i) = \log(\pi_i/(1-\pi_i))$
+- probit link: $g_2(\pi_i) = \Phi^{-1}(\pi_i)$
+- cloglog link: $g_3(\pi_i) = \log(-\log(1-\pi_i))$
+- loglog link: $g_4(\pi_i) = -\log(-\log(\pi_i))$
+
+```{r invlinks, echo=T}
+ginv <- function(etavec, link="logit"){
+  #etavec is a vector of the values of eta (=X%*%beta)
+  #link will be a string indicating the link function
+  
+  if(link=="logit"){
+    ginvvals <- exp(etavec)/(1+exp(etavec))
+  }
+  if(link=="probit"){
+    ginvvals <- pnorm(etavec)
+  }
+  if(link=="cloglog"){
+   ginvvals <- 1-exp(-exp(etavec))
+  }
+  if(link=="loglog"){
+    #code this as correct inverse loglog link
+    ginvvals <- exp(-exp(-etavec))
+    
+  }
+  return(ginvvals)
+}
+
+#define colors for links
+logit.col <- rgb(27,158,119, maxColorValue = 255)
+probit.col <- rgb(217,95,2, maxColorValue = 255)
+cloglog.col <- rgb(117,112,179, maxColorValue = 255)
+loglog.col <- rgb(231,41,138, maxColorValue = 255)
+```
+
+## Load Your Data Set
+
+```{r loadthedata}
+load(url('https://byu.box.com/shared/static/w6tqc3ynio08r89u8c0z6t2xbbc6039g.rdata')) #Group 1
+
+#load(url('https://byu.box.com/shared/static/ko1n7mw0f0qeq0ujtab7jcqot3wkvjmc.rdata')) #Group 2
+
+#load(url('https://byu.box.com/shared/static/ytndfz8vmnx53le7iye0ug24gqlwqo3m.rdata')) #Group 3
+
+#load(url('https://byu.box.com/shared/static/5i7il31jr8a0eku3y2zufvawi28cd21p.rdata')) #Group 4
+```
+
+## Compare Links to Loess Curves
+
+Fix $\beta$ to be a positive value (we'll estimate it later); play around with a few different values to see how changing $\beta$ changes the fitted line.  Do this for each of the four link functions.  
+
+```{r loesscurves, echo=T}
+beta <- 4 #bigger values => steeper curves; smaller values => flatter curves #For probit link, a beta=5 seems to fit well; for logit link, a beta=8 does okay; cloglog and loglog don't seem appropriate based on this exercise (maybe since we aren't adjusting the intercept)
+eta <- dat$x*beta
+
+plot(dat$x, dat$y, xlab="x", ylab="y")
+lo <- loess(y~x, data=dat, span=1.5) #you may need to play with the span value to get something that looks "right" (don't spend much time on this though)
+newdat <- data.frame(x=seq(-.5, .5, length=500))
+lines(newdat$x, predict(lo, newdat))
+
+points(dat$x, ginv(eta, link="logit"), pch=19, col=logit.col)
+points(dat$x, ginv(eta, link="probit"), pch=19, col=probit.col)
+points(dat$x, ginv(eta, link="cloglog"), pch=19, col=cloglog.col)
+points(dat$x, ginv(eta, link="loglog"), pch=19, col=loglog.col)
+
+legend("right", legend=c("logit", "probit", "cloglog", "loglog"), pch=19, col=c(logit.col, probit.col, cloglog.col, loglog.col))
+```
+
+Which link do you think was used to generate your data? Why?  
+
+## Fit the Four Models
+
+Fit the four models with the different link functions.  Compare the summary from each model.  How do they compare?  Is there anything you notice about the different model fits? 
+
+```{r fittedmods}
+mod.logit <- glm(y~x, data=dat, family=binomial)
+mod.probit <- glm(y~x, data=dat, family=binomial(link="probit"))
+mod.cloglog <- glm(y~x, data=dat, family=binomial(link="cloglog"))
+mod.loglog <- glm((1-y)~x, data=dat, family=binomial(link="cloglog"))
+
+summary(mod.logit)
+summary(mod.probit)
+summary(mod.cloglog)
+summary(mod.loglog)
+```
+
+## Plot the Fitted Lines with the Data
+
+Remember, the "predict" and "fitted" functions return different defaults.
+
+```{r fittedlines}
+plot(dat$x, dat$y, xlab="x", ylab="y")
+lines(newdat$x, predict(mod.logit, newdat, type='response'), col=logit.col, lwd=2)
+lines(newdat$x, predict(mod.probit, newdat, type='response'), col=probit.col, lwd=2)
+lines(newdat$x, predict(mod.cloglog, newdat, type='response'), col=cloglog.col, lwd=2)
+lines(newdat$x, 1-predict(mod.loglog, newdat, type='response'), col=loglog.col, lwd=2)
+legend("right", legend=c("logit", "probit", "cloglog", "loglog"), lwd=2, col=c(logit.col, probit.col, cloglog.col, loglog.col))
+```
+
+How do the fitted lines compare?  Where (and by how much) do they differ?  Is the portion where they differ important for your data? 
+**The log-log and c-log-log are the most different.  They differ a lot in the middle (around $pi = 0.5$) and then again in the tails.  In the middle, when $x=0$, the log-log link would estimate a $\hat{\pi}$ value that is around 0.2 higher than the c-log-log. That seems like a big amount.**
+
+**The probit and logit fits are *very* similar. And fitted values are in the middle of the other two links.**
+
+## Plot Confidence Intervals for Each Link
+
+```{r confints}
+
+#eta-hat and CI for the logit model
+eta.logit <- predict(mod.logit, newdat, se=T)
+eta.logit.bnds <- matrix(rep(eta.logit$fit, 2), byrow=T, nrow=2) + matrix(rep(c(qnorm(.025), qnorm(.975)), each=500), byrow=T, nrow=2)*matrix(rep(eta.logit$se.fit, 2), byrow=T, nrow=2)
+
+#eta-hat and CI for probit model
+eta.probit <- predict(mod.probit, newdat, se=T)
+eta.probit.bnds <- matrix(rep(eta.probit$fit, 2), byrow=T, nrow=2) + matrix(rep(c(qnorm(.025), qnorm(.975)), each=500), byrow=T, nrow=2)*matrix(rep(eta.probit$se.fit, 2), byrow=T, nrow=2)
+
+#eta-hat and CI for cloglog model
+eta.cloglog <- predict(mod.cloglog, newdat, se=T)
+eta.cloglog.bnds <- matrix(rep(eta.cloglog$fit, 2), byrow=T, nrow=2) + matrix(rep(c(qnorm(.025), qnorm(.975)), each=500), byrow=T, nrow=2)*matrix(rep(eta.cloglog$se.fit, 2), byrow=T, nrow=2)
+
+#eta-hat and CI for loglog model
+eta.loglog <- predict(mod.loglog, newdat, se=T)
+eta.loglog.bnds <- matrix(rep(eta.loglog$fit, 2), byrow=T, nrow=2) + matrix(rep(c(qnorm(.025), qnorm(.975)), each=500), byrow=T, nrow=2)*matrix(rep(eta.loglog$se.fit, 2), byrow=T, nrow=2)
+
+#Plot all fitted lines and CIs on the same plot
+plot(dat$x, dat$y, xlab="x", ylab="y", main="Fitted Lines with 95% CIs", type="n")
+
+#CI bands as shaded polygons (drawn first so the lines and points go on top)
+polygon(x=c(newdat$x, rev(newdat$x)), y=c(ginv(eta.logit.bnds[1,], link="logit"), rev(ginv(eta.logit.bnds[2,], link="logit"))), col=adjustcolor(logit.col, alpha.f=0.3), border=NA)
+
+polygon(x=c(newdat$x, rev(newdat$x)), y=c(ginv(eta.probit.bnds[1,], link="probit"), rev(ginv(eta.probit.bnds[2,], link="probit"))), col=adjustcolor(probit.col, alpha.f=0.3), border=NA)
+
+polygon(x=c(newdat$x, rev(newdat$x)), y=c(ginv(eta.cloglog.bnds[1,], link="cloglog"), rev(ginv(eta.cloglog.bnds[2,], link="cloglog"))), col=adjustcolor(cloglog.col, alpha.f=0.3), border=NA)
+
+#1-ginv for the cloglog link: yes, this is supposed to be the 1-ginv for the cloglog link
+polygon(x=c(newdat$x, rev(newdat$x)), y=c(1-ginv(eta.loglog.bnds[1,], link="cloglog"), 1-rev(ginv(eta.loglog.bnds[2,], link="cloglog"))), col=adjustcolor(loglog.col, alpha.f=0.3), border=NA)
+
+lines(newdat$x, predict(mod.logit, newdat, type='response'), col=logit.col, lwd=2)
+lines(newdat$x, predict(mod.probit, newdat, type='response'), col=probit.col, lwd=2)
+lines(newdat$x, predict(mod.cloglog, newdat, type='response'), col=cloglog.col, lwd=2)
+lines(newdat$x, 1-predict(mod.loglog, newdat, type='response'), col=loglog.col, lwd=2)
+
+points(dat$x, dat$y)
+
+legend("right", legend=c("logit", "probit", "cloglog", "loglog"), lwd=2, col=c(logit.col, probit.col, cloglog.col, loglog.col))
+
+```
+
+## Compare Residuals 
+
+Note 1: Normally we would compare residuals from our different models.  However, residuals that we've learned about so far don't work very well for binary data.  Usually we will compare residual sizes (we like smaller residuals) and look for any extreme or influential values.  
+
+Note 2: There are residuals designed to better compare model fit for binary response variables.  This may be something a couple of you are interested in exploring for your class final project.  
+
+## Compare Models using Cross-Validation
+
+```{r cv}
+library(boot)
+library(knitr)
+
+#Mean Prediction Error
+cost <- function(y, prob){mean(abs(y-prob) > 0.5)} #right/wrong prediction
+cv.logit <- cv.glm(dat, mod.logit, cost=cost, K=5)$delta[1]
+cv.probit <- cv.glm(dat, mod.probit, cost=cost, K=5)$delta[1]
+cv.cloglog <- cv.glm(dat, mod.cloglog, cost=cost, K=5)$delta[1]
+cv.loglog <- cv.glm(dat, mod.loglog, cost=cost, K=5)$delta[1]
+
+#MSE loss
+cv.logit.mse <- cv.glm(dat, mod.logit,  K=5)$delta[1]
+cv.probit.mse <- cv.glm(dat, mod.probit, K=5)$delta[1]
+cv.cloglog.mse <- cv.glm(dat, mod.cloglog, K=5)$delta[1]
+cv.loglog.mse <- cv.glm(dat, mod.loglog, K=5)$delta[1]
+
+#Sensitivity: proportion of y=1 correctly predicted (prob > 0.5)
+sens.cost <- function(y, prob){mean(prob[y==1] > 0.5)}
+cv.logit.sens <- cv.glm(dat, mod.logit, cost=sens.cost, K=5)$delta[1]
+cv.probit.sens <- cv.glm(dat, mod.probit, cost=sens.cost, K=5)$delta[1]
+cv.cloglog.sens <- cv.glm(dat, mod.cloglog, cost=sens.cost, K=5)$delta[1]
+
+#Specificity: proportion of y=0 correctly predicted (prob <= 0.5)
+spec.cost <- function(y, prob){mean(prob[y==0] <= 0.5)}
+cv.logit.spec <- cv.glm(dat, mod.logit, cost=spec.cost, K=5)$delta[1]
+cv.probit.spec <- cv.glm(dat, mod.probit, cost=spec.cost, K=5)$delta[1]
+cv.cloglog.spec <- cv.glm(dat, mod.cloglog, cost=spec.cost, K=5)$delta[1]
+
+#For the loglog model the fitted probability is for 1-y, so flip the thresholds
+sens.cost.loglog <- function(y, prob){mean(prob[y==0] < 0.5)}
+spec.cost.loglog <- function(y, prob){mean(prob[y==1] > 0.5)}
+cv.loglog.sens <- cv.glm(dat, mod.loglog, cost=sens.cost.loglog, K=5)$delta[1]
+cv.loglog.spec <- cv.glm(dat, mod.loglog, cost=spec.cost.loglog, K=5)$delta[1]
+
+mycv <- data.frame(link=c("logit", "probit", "cloglog", "loglog"), abs.cost=c(cv.logit,cv.probit,cv.cloglog,cv.loglog), mse.cost=c(cv.logit.mse, cv.probit.mse, cv.cloglog.mse, cv.loglog.mse), sensitivity=c(cv.logit.sens, cv.probit.sens, cv.cloglog.sens, cv.loglog.sens), specificity=c(cv.logit.spec, cv.probit.spec, cv.cloglog.spec, cv.loglog.spec))
+kable(mycv)
+```
+
+## Which Model is Best?
+
+Justify your choice using *at least* three measures.  

@@ -1,0 +1,166 @@
+---
+title: "GLM Model-Fit Forensics"
+author: "STAT 637"
+date: "September 21, 2026"
+format:
+  html:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+Dr. Berrett used Codex GPT-5.6 Luna to create this initial file and to suggest unique data sets for each team.  She then did extensive editing (sometimes using Claude Sonnet 5 in Positron for generalizing formulation) and checking to makes sure the activity examined the content in the way the course needs. 
+
+## Activity goal
+
+Act as a statistical consultant deciding whether a predictor should remain in a generalized linear model. Use the assigned data set to compare two nested models and deliver a one-minute model-fit verdict.
+
+Your report should show how coefficient uncertainty, deviance comparisons, hypothesis tests, and residual diagnostics support the decision.
+
+## Partnership assignments
+
+| Pair | Partners | Assigned data set | Response | Candidate predictor |
+|---:|---|---|---|---|
+| 1 | Jarom and Andrew | `MASS::birthwt` | `low` | `smoke` |
+| 2 | Anna and Brylee | `datasets::InsectSprays` | `count` | `spray` |
+| 3 | Nathan and Shae | `datasets::esoph` | `cbind(ncases, ncontrols)` | `tobgp` |
+| 4 | RJ and Brett | `MASS::quine` | `Days` | `Eth` |
+| 5 | Tyler and Caleb | `datasets::mtcars` | `mpg` | `wt` |
+| 6 | Bracken and Dallin | `MASS::Insurance` | `Claims` | `Group` |
+
+All assigned data sets are available directly from R or the standard `MASS` package. No local teaching-folder files are required.
+
+## Workflow
+
+### Identify the modeling question
+
+Discuss: description of the response variable, the scientific or practical question, and the predictor whose contribution you will investigate.
+
+```{r datasetup}
+# Replace these placeholders with your partnership's assigned values from the table.
+data_obj <- MASS::quine
+response <- "Days"
+candidate_predictor <- "Eth"
+fam <- "poisson"
+```
+
+### Prepare the data
+
+Document recoding, missing-value handling, filtering, and any transformations. Explain why the selected response distribution is reasonable.
+
+```{r}
+# Example only. Adapt to your data set.
+library(MASS)
+dat <- MASS::quine
+
+```
+
+### Fit two nested models
+
+Fit a reduced model without the candidate predictor and a full model that includes it. Keep the response distribution and link function the same when comparing the models.
+
+```{r mods}
+library(stats)
+
+# reformulate() builds the formula from the *values* of response and
+# candidate_predictor, rather than using those names literally.
+mod0 <- glm(
+  reformulate("1", response = response),
+  data = dat,
+  family = fam
+)
+
+mod1 <- glm(
+  reformulate(candidate_predictor, response = response),
+  data = dat,
+  family = fam
+)
+
+summary(mod0)
+summary(mod1)
+```
+
+### Quantify coefficient uncertainty
+
+For the candidate coefficient, report the estimate, standard error, covariance information, and a confidence interval. Explain what the interval says in the scale of the linear predictor or response model.
+
+```{r}
+coef(summary(mod1))
+vcov(mod1)
+summary(mod1)$cov.scaled
+confint(mod1)
+```
+
+Record:
+
+- candidate coefficient estimate:
+- standard error:
+- relevant covariance entry or matrix:
+- confidence intervals:
+- coefficient interpretation:
+
+### Compare model fit with deviance
+
+Compute the difference in deviance and use it to test whether the full model improves fit relative to the reduced model.
+
+```{r}
+deviance(mod0)
+deviance(mod1)
+delta_deviance <- deviance(mod0) - deviance(mod1)
+delta_deviance
+
+anova(mod0, mod1)
+```
+
+State the null and alternative hypotheses, test statistic, degrees of freedom, p-value, and conclusion in context.
+
+### Compare residuals
+
+Compare at least two residual types. Include standardized residuals and identify observations that deserve investigation.
+
+```{r}
+residual_summary <- data.frame(
+  fitted = fitted(mod1),
+  raw = residuals(mod1, type = "response"),
+  pearson = residuals(mod1, type = "pearson"),
+  deviance = residuals(mod1, type = "deviance"),
+  standardized = rstandard(mod1)
+)
+
+head(residual_summary)
+
+par(mfrow=c(2,2))
+plot(mod1)
+```
+
+Very briefly, discuss:
+
+- why multiple residual types are available for GLMs;
+- why standardization is useful;
+- whether the residuals reveal lack of fit, unusual observations, or influential cases.
+
+```{r}
+dat$Days[c(59, 72, 104)]
+```
+
+## One-minute model-fit verdict
+
+Use this structure for your team's one-minute presentation:
+
+1. **Question:** What were you trying to learn?
+Whether or not a student's ethnicity has a significant impact on modeling absenteeism
+2. **Models:** What differed between the reduced and full models?
+Reduced: only intercept
+Full: Included Ethnicity
+3. **Evidence:** What did the coefficient interval, deviance test, and residuals show?
+Interval and Deviance test both showed that including ehtnicity has a significant impact on the model performance.
+Residuals showed there may be some influential points, not a lot to learn due to binary input variabel. 
+4. **Verdict:** Keep the candidate predictor, remove it, or gather better data. Explain why.
+Keep because the deviance test showed that the models performed significantly differently, implying the 'full' model did significantly better and we should keep the variable in the model. 
+Ethnicity A appears to 'absenteeism' more. 
+
+Due to very high variance, running it as a negative binomial instead of a Poisson would likely be a better approach (Brett ran it and the residuals look much better - smaller range, etc. )
+

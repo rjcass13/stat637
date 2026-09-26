@@ -5,7 +5,7 @@
 \usepackage[most]{tcolorbox}
 \usepackage[skip=1em,indent=0pt]{parskip}
 \setlength{\parindent}{0pt}
-\newcommand{\statvec}[1]{\underset{\sim}{\bm{#1}}} % Vector symbol (tilde under vector)
+\newcommand{\svec}[1]{\underset{\sim}{\bm{#1}}} % Vector symbol (tilde under vector)
 \DeclareMathOperator{\EX}{\mathbb{E}} % Expected Value symbol
 \DeclareMathOperator{\ext}{\EX_{\theta}} % Expected Value symbol
 \DeclareMathOperator{\vart}{Var_{\theta}} % Expected Value symbol
@@ -15,8 +15,8 @@
 \newcommand{\asto}{\overset{a.s.}{\to}}
 \newcommand{\rthto}{\overset{L^r}{\to}}
 \newcommand{\dto}{\overset{D}{\to}}
-\newcommand{\xtb}{x^{\top}\statvec{\beta}}
-\newcommand{\xitb}{x_i^{\top}\statvec{\beta}}
+\newcommand{\xtb}{x^{\top}\svec{\beta}}
+\newcommand{\xitb}{x_i^{\top}\svec{\beta}}
 % Force all aggregate symbols to always put values above/below
 \let\Oldint=\int
 \let\Oldsum=\sum
@@ -140,5 +140,43 @@ Canonical Link: $g*(w(\theta_i)) = w(\theta_i)$
 Example, 
 
 Binomial: $w(\pi_i) = log(\frac{\pi_i}{1-\pi_i}) \implies g(\pi_i) = log(\frac{\pi_i}{1-\pi_i}), g*(w(\pi_i)) = w(\pi_i)$
+
+
+\section{}
+
+With $U$ as the score function, and $\mathbb{J}$ as the variance:
+
+$U \sim N(\svec{0}, \mathbb{J})$
+
+$\mathbb{J}^{-1/2} U \sim N(0,1)$
+
+$(\mathbb{J}^{-1/2} U)^{\top}\mathbb{J}^{-1/2} U = U^{\top}\mathbb{J}^{-1}U \sim \chi^2(k)$
+
+
+\section{Prediction Intervals}
+
+Using regular process for confint on predictions of using the variance of $\frac{X \mathbb{I}X^{\top}}{g^{-1}(\hat{\mu})}$ provides too large of an interval. The better method is to get interval on $\hat{\eta}$ then transform bounds to $\hat{\mu}$:
+
+$\hat{\eta} = x\hat{\beta} \sim N(x\beta, X Cov(\hat{\beta})X^{\top})$ Use that variance to get $SE(\hat{\eta})$
+
+$\hat{\eta} \pm 1.96 SE(\hat{\eta}) = [\hat{\eta}_1, \hat{\eta}_2], \hat{\mu}_2 = g^{-1}(\hat{\eta}_2)$
+
+\section{Residuals}
+
+Perason Residuals: $r_{p_i} = \frac{y_i - \hat{\mu}_i}{\sqrt{Var(Y_i)}}$
+
+Examples: 
+
+Poisson: $\frac{y_i - \hat{\mu}_i}{\sqrt{\hat{\mu}_i}}$
+
+Logit: $\frac{y_i - \hat{\mu}_i}{}$
+
+Anscombe: R doesn't really even touch
+
+Deviance: uses the individual observation log-likelihood
+
+Working: Similar to the Z statistic (difference from mean divided by SE)
+
+
 
 \end{document}
