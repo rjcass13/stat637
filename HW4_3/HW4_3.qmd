@@ -1,0 +1,16 @@
+---
+title: "HW4.3"
+author: "RJ Cass"
+format: pdf
+---
+
+
+# 1
+
+
+# 2
+
+
+# 3 
+
+From Dr. Berret: choose the log-log link (wants us to fit something not included in the package)
