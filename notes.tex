@@ -189,6 +189,90 @@ There are lots of ways to pick link functions:
 
 In some cases, the link function doesn't make much of a difference. However, sometimes it does. 
 
+\section{Crabs Analysis}
 
+Model with 'is.very.dark' as the covariate. 2 common ways of writing:
+
+1. 
+
+$\eta_{ij} = \alpha_0 + \gamma_j$ : $Y_{ij} = $ whether or not the ith crab in the jth color group has a sateliitle ($j  = 1, 2; i = 1, ..., n$)
+
+Often constrained such that $\eta_{i1} = \alpha_0 + \gamma_1, \eta_{i2} = \alpha_0 + \gamma_2, \gamma_1 + \gamma_2 = 0$ ("sum to zero" constraint)
+
+ie. $x = \begin{pmatrix}
+    1 & -1 \\ 1 & -1 \\ 1 & 1 \\ 1 & 1 \\ \vdots
+\end{pmatrix}$
+
+2. 
+
+$\eta_i = \beta_0 + I(x_i = True)\beta_1$
+
+When written with the indicator, that's the same as constraint $\gamma_1 = 0$
+
+ie. $x = \begin{pmatrix}
+    1 & 0 \\ 1 & 0 \\ 1 & 1 \\ 1 & 1 \\ \vdots
+\end{pmatrix}$
+
+
+Note:
+
+$\hat{\beta}_0 = \hat{\alpha}_0 + \hat{\gamma}_1$
+
+$\hat{\beta}_0 + \hat{\beta}_1 = \hat{\alpha}_0 + \hat{\gamma}_2$
+
+$\beta_0$ is the log odds that a not very dark crab has a satellite
+
+$e^{\beta_0}$ is the odds that a not very dark crab has a satellite
+
+$\beta_0 + \beta_1$ is the log odds that a very dark crab has a satellite
+
+$e^{\beta_0 + \beta_1}$ is the odds that a very dark crab has a satellite
+
+
+$\pi_{i1}$ is the probability of satellite for not very dark
+
+$\pi_{i2}$ is the probability of satellite for very dark
+
+$ln(\frac{\pi_{i2}}{(1-\pi_{i2})}) = \beta_0 + \beta_1$
+
+$ln(\frac{\pi_{i1}}{(1-\pi_{i1})}) = \beta_0$
+
+$ln(\frac{\pi_{i2}/(1-\pi_{i2})}{\pi_{i1}/(1-\pi_{i1})}) = \beta_1$ which is the log odds ratio that a crab has a satellite for a very dark vs. not very dark
+
+Now with a 4-level factor as the covariate
+
+$\eta_i = \beta_0 + I(x_i="DarkMed")\beta_{dm} + I(x_i="LightMed)\beta_{lm} + I(x_i="Med")\beta_{med}$
+
+$H_0: \beta_{dm} = \beta_{lm} = \beta_{med} = 0, H_1:$ at leat one is not 0
+
+Test with Delta Deviance and compare to $\chi^2(3)$. We get a p-value of .0033 so we rejec the $H_0$ and conclude there is enough evidence that at least of the $\beta$s should be in the model. 
+
+For testing a specific $\beta$:
+
+$H_0: \beta_{dm} = 0, H_1: \beta_{dm} \neq 0$. p-value is 0.04. Any significance less than this would find that dm is not different from dark
+
+Now, for testing contrasts between $\beta$s:
+
+$H_0: \beta_{med} - \beta_{lm} = 0, H_1: \beta_{med} - \beta_{lm} \neq 0$
+
+Contrast: $c = (0, 0, -1, 1)^{\top}$, usual contrast rules apply
+
+$e^{\beta_{med}}$ is the odds ratio that a crab has a satellite for mdeium vs. dark crabs ($\eta_{i,med} - \eta_{i,d} = \beta_{med}, log(\frac{\pi_{1,med}/(1-\pi_{i,med})}{\pi_{1,d}/(1-\pi_{i,d})})$)
+
+\section{4.5} 
+
+Final model from selection:
+
+$y_i \inddist Bern(\pi_i)$
+
+$ln(\frac{\pi_i}{1-\pi_i}) = \beta_0 + \beta_1x_{i1} + \beta_2x_{i2}$
+
+$x_{i1}$ represents the width of crab i, $x_{12}$ represents the indicator for 'is very dark' for crab i
+
+For a 1 unit increase in width, the log-odds increase by $\beta_1$.
+
+The odds change by a factor of $e^{\beta_1}$ when going from one width to a width of 1 unit more.
+
+$e^{\beta_1}$ is the odds-ratio of having a satellite for two crabs one unit width difference. "Reversing" it, $e^{\beta_1}$ is the odds-ratio of a crab being one unit wider for a crab that does or does not have a satellie.
 
 \end{document}

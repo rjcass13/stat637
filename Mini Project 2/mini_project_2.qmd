@@ -1,0 +1,10 @@
+---
+title: "Mini Project 2"
+author: "Brylee Wilcox, RJ Cass"
+format: pdf
+---
+
+```{r}
+suppressPackageStartupMessages(library('readxl'))
+dt <- read_excel("slc_sfc_mo_data.XLSX")
+```
