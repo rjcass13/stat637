@@ -1,10 +1,198 @@
 ---
 title: "Mini Project 2"
-author: "Brylee Wilcox, RJ Cass"
-format: pdf
+author: "Bracken Sant, Brett Pedersen, RJ Cass"
+format: 
+  pdf:
+    geometry:
+      - top=25mm
+      - bottom=25mm
+      - left=20mm
+      - right=20mm
+execute:
+  echo: false
 ---
 
+# Introduction
+
+Between 1967 and 1969, data were collected from a sample of members of the Church of Jesus Christ of Latter-day Saints in both Salt Lake City and San Francisco. These members were asked a large series of questions about a large variety of topics, anything from their involvement in their faith to their perceptions on politcal events at the time. Our goal is to utilize these data to identify what factors might predict potential racist views/behavior from surveyed members.
+
+In the dataset there are a variety of measures that could be used to measure whether someone could be considered 'racist'. After reviewing the questions, we decided to use question 219, "If several negro families moved into your neighborhood, would you be apt to move elsewhere if you could get a fair price for your house".
+
+There are 271 possible explanatory variables from the dataset. Having reviewed the questions, we decided to select several questions that examine various aspects of a member's religious and political beliefs that could influence how they would react to the above scenario. These questions are shown in @tbl-question_list.
+
++----------+------------+---------------------------------------------------------+----------------+
+| Q \#     | Identifier | Brief Summary                                           | Response Type  |
++:========:+:==========:+:=======================================================:+:==============:+
+| 6        | MISSION    | Served a mission?                                       | 2-Level Factor |
++----------+------------+---------------------------------------------------------+----------------+
+| 33       | READSCRP   | How often read scriptures?                              | 6-Level Factor |
++----------+------------+---------------------------------------------------------+----------------+
+| 36       | PRVPRAYR   | How often private prayer?                               | 6-Level Factor |
++----------+------------+---------------------------------------------------------+----------------+
+| 250      | GENDER     | Gender                                                  | 2-Level Factor |
++----------+------------+---------------------------------------------------------+----------------+
+| 251      | AGE        | Age                                                     | Continuous     |
++----------+------------+---------------------------------------------------------+----------------+
+| 252      | INCOME     | Income                                                  | Continuous     |
++----------+------------+---------------------------------------------------------+----------------+
+| 254      | REGION     | Region                                                  | 7-Level Factor |
++----------+------------+---------------------------------------------------------+----------------+
+| 92       | CURSCAIN   | Believe black skin croms from Curse of Cain?            | Continuous 1-5 |
++----------+------------+---------------------------------------------------------+----------------+
+| 95       | PSTHNEG    | Believe God's will that priesthood witheld from blacks? | Continuous 1-5 |
++----------+------------+---------------------------------------------------------+----------------+
+| 110      | DARWIN     | Believe we evolved from lower lifeforms?                | Continuous 1-5 |
++----------+------------+---------------------------------------------------------+----------------+
+| 146      | BLKDISCR   | How serious a sin to discriminate?                      | Continuous 1-5 |
++----------+------------+---------------------------------------------------------+----------------+
+| 158      | NAROWMND   | How narrowminded you think members are?                 | Continuous 1-5 |
++----------+------------+---------------------------------------------------------+----------------+
+| 163      | CONSRVAT   | Church is unduly conservative?                          | Continuous 1-5 |
++----------+------------+---------------------------------------------------------+----------------+
+| 165      | SPKOUTSC   | Should leaders speak out more against discrimination?   | Continuous 1-5 |
++----------+------------+---------------------------------------------------------+----------------+
+| 169      | IGRSOCPB   | True purpose of religion is to make a social impact?    | Continuous 1-5 |
++----------+------------+---------------------------------------------------------+----------------+
+: Question List
+
+# Exploratory Data Analysis
+
+```{r load_data}
+suppressPackageStartupMessages(library('ggplot2'))
+dat <- readRDS('filt_and_fixed.rds')
+```
+
+The response question allowed 4 possible responses, 2 of which indicate a desire to move, and the other 2 indicating they would stay. We grouped these into a binary response variable indicating "Would move" and "Wouldn't move". Most of the explanatory variables were 4-point scales with an option for "I don't know" or "No opinion", so we coded these as 1-5 continuous variables (with the "Don't Know" option in the middle).
+
+The only assumption we need to check for logistic/probit regression is that the response is monotonic in realation to the continuous covariates (ie. as income increases, the probability of moving either strictly increases or decreases). We check this condition for the continuous variables and confirmed that it holds. An example test is shown in @fig-monotonic_test.
+
+```{r fig-monotonic_test}
+#| fig-cap: "Plot showing monotonicty between income and the probability of someone moving."
+ggplot(dat, aes(x = INCOME, y = as.numeric(BLAKMOVE)-1)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cr"), 
+              method.args = list(family = binomial(link = "probit")), color = "blue") +
+  labs(title = "Monotonic Test for INCOME", y = "BLAKMOVE")
+```
+
+# Model Development
+
+```{r var_selection}
+full_model <- glm(BLAKMOVE~., data=dat, family=binomial)
+step_model <- step(full_model, direction = "both", k = log(nrow(dat)), trace = 0)
+# summary(step_model): yields the following covariates:
+# AGE, PSTHNEG, BLKDISCR, CONSRVAT
+```
+
+```{r link_compare}
+suppressPackageStartupMessages(library("boot"))
+suppressPackageStartupMessages(library("knitr"))
+set.seed(637)
+# Get the AICs
+model_eq <- "BLAKMOVE ~ AGE + PSTHNEG + BLKDISCR + CONSRVAT"
+dat$BLAKMOVE_INVRT <- 1 - as.numeric(as.character(dat$BLAKMOVE))
+model_eq_clog <- "BLAKMOVE_INVRT ~ AGE + PSTHNEG + BLKDISCR + CONSRVAT"
+mod_logit <- glm(model_eq, data=dat, family=binomial)
+mod_probit <- glm(model_eq, data=dat, family=binomial(link="probit"))
+mod_cloglog <- glm(model_eq, data=dat, family=binomial(link="cloglog"))
+mod_loglog <- glm(model_eq_clog, data=dat, family=binomial(link="cloglog"))
+logit_aic <- summary(mod_logit)$aic
+probit_aic <- summary(mod_probit)$aic
+cloglog_aic <- summary(mod_cloglog)$aic
+loglog_aic <- summary(mod_loglog)$aic
+#Mean Prediction Error
+cost <- function(y, prob){mean(abs(y-prob) > 0.5)} #right/wrong prediction
+cv_logit <- cv.glm(dat, mod_logit, cost=cost, K=5)$delta[1]
+cv_probit <- cv.glm(dat, mod_probit, cost=cost, K=5)$delta[1]
+cv_cloglog <- cv.glm(dat, mod_cloglog, cost=cost, K=5)$delta[1]
+cv_loglog <- cv.glm(dat, mod_loglog, cost=cost, K=5)$delta[1]
+#MSE loss
+cv_logit_mse <- cv.glm(dat, mod_logit,  K=5)$delta[1]
+cv_probit_mse <- cv.glm(dat, mod_probit, K=5)$delta[1]
+cv_cloglog_mse <- cv.glm(dat, mod_cloglog, K=5)$delta[1]
+cv_loglog_mse <- cv.glm(dat, mod_loglog, K=5)$delta[1]
+#Sensitivity: proportion of y=1 correctly predicted (prob > 0.5)
+sens.cost <- function(y, prob){mean(prob[y==1] > 0.5)}
+cv_logit_sens <- cv.glm(dat, mod_logit, cost=sens.cost, K=5)$delta[1]
+cv_probit_sens <- cv.glm(dat, mod_probit, cost=sens.cost, K=5)$delta[1]
+cv_cloglog_sens <- cv.glm(dat, mod_cloglog, cost=sens.cost, K=5)$delta[1]
+#Specificity: proportion of y=0 correctly predicted (prob <= 0.5)
+spec_cost <- function(y, prob){mean(prob[y==0] <= 0.5)}
+cv_logit_spec <- cv.glm(dat, mod_logit, cost=spec_cost, K=5)$delta[1]
+cv_probit_spec <- cv.glm(dat, mod_probit, cost=spec_cost, K=5)$delta[1]
+cv_cloglog_spec <- cv.glm(dat, mod_cloglog, cost=spec_cost, K=5)$delta[1]
+#For the loglog model the fitted probability is for 1-y, so flip the thresholds
+sens_cost_loglog <- function(y, prob){mean(prob[y==0] < 0.5)}
+spec_cost_loglog <- function(y, prob){mean(prob[y==1] > 0.5)}
+cv_loglog_sens <- cv.glm(dat, mod_loglog, cost=sens_cost_loglog, K=5)$delta[1]
+cv_loglog_spec <- cv.glm(dat, mod_loglog, cost=spec_cost_loglog, K=5)$delta[1]
+mycv <- data.frame(
+  link=c("logit", "probit", "cloglog", "loglog"), 
+  aic = round(c(logit_aic, probit_aic, cloglog_aic, loglog_aic), 3),
+  abs_cost = round(c(cv_logit,cv_probit,cv_cloglog,cv_loglog), 3), 
+  mse_cost = round(c(cv_logit_mse, cv_probit_mse, cv_cloglog_mse, cv_loglog_mse), 3),
+  sensitivity = round(c(cv_logit_sens, cv_probit_sens, cv_cloglog_sens, cv_loglog_sens), 3), 
+  specificity = round(c(cv_logit_spec, cv_probit_spec, cv_cloglog_spec, cv_loglog_spec), 3))
+```
+
+We determined how to build our model by performing a mix of variable selection and link function selection. We started by selecting a logit link function, then proceeded to perform BIC stepwise variable selection. Once we had our selected variables we explored link functions to pick the one that best fit the data.
+
+Following variable selection we ended with the following variables: AGE, PSTHNEG, BLKDISCR, CONSRVAT. We used those variables to test 4 different link functions, as shown in @tbl-link_selection. Due to the combination of AIC, Sensitivity, and Specificity, we chose to use a Probit link function for our model.
+
+```{r tbl-link_selection}
+#| tbl-cap: "Summary of model performance with different link functions."
+kable(mycv)
+```
+
+Where $\Phi$ is the standard normal CDF, our model is of the form:
+
+$$
+\begin{aligned}
+Y_i &\sim Bernoulli(\mu_i) \\
+probit(\mu_i) &= \Phi^{-1}(\mu_i) = \eta_i \\
+\eta_i &= \beta_0 + \beta_1(\text{Age}) + \beta_2(\text{PSTHNEG}) + \beta_3(\text{BLKDISCR}) + \beta_4(\text{CONSRVAT})
+\end{aligned}
+$$
+
 ```{r}
-suppressPackageStartupMessages(library('readxl'))
-dt <- read_excel("slc_sfc_mo_data.XLSX")
+summary(mod_probit)
+```
+
++-----------+--------------+
+| Variable  | Estimate     |
++===========+==============+
+| AGE       | ```          |
+|           | 0.014362     |
+|           | ```          |
++-----------+--------------+
+| PSTHNEG   | ```          |
+|           | -0.253041    |
+|           | ```          |
++-----------+--------------+
+| BLKDISCR  | ```          |
+|           | 0.237784     |
+|           | ```          |
++-----------+--------------+
+| CONSRVAT  | ```          |
+|           | -0.096096    |
+|           | ```          |
++-----------+--------------+
+
+Estimates of the effect of each included variable on the probit of the probability of being racist (according to whether someone would want to change neighborhoods if a black family moves in) are given in the table above. For a 1 year increase in age, $\Phi^{-1}(\mu_i)$ increases by 0.014362. For a 1 unit increase in the belief that it's God's will to deny the priesthood to black people, $\Phi^{-1}(\mu_i)$ decreases by -0.253041. For a 1 unit increase in the belief that discrimination is a serious sin, $\Phi^{-1}(\mu_i)$ increases by 0.237784. Lastly, for a 1 unit increase in the belief that the church is too conservative, $\Phi^{-1}(\mu_i)$ decreases by -0.096096.
+
+All estimates are significant. The direction of the first and last estimates make sense. Age is often associated with increased racism, while a strong belief that the church is too conservative implies the individual is less conservative themselves, which implies a smaller likelihood of being racist. The middle two estimates are surprising however. According to our model, a belief that God denied the priesthood to black individuals is associated with less racism and an understanding of the seriousness of discrimination is associated with more racism.
+
+The direction of each estimate could be explained by the discrepancy between what an individual claims to believe and how they act in accordance to their demographic characteristics. When asked about their beliefs, religious individuals will be quick to answer that God loves all of His children equally and that he expects the same of His children. However, in practice, a person's treatment of others is more likely to be influenced by certain demographic characteristics, such as age and political affiliation in this case.
+
+```{r}
+# prediction intervals
+```
+
+{{< pagebreak >}}
+
+# Appendix: Source Code
+```{r}
+#| echo: true
+#| eval: false
+#| ref.label: !expr knitr::all_labels()
 ```

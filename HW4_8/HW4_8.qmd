@@ -1,0 +1,133 @@
+---
+title: "HW4.8"
+author: "RJ Cass"
+format: 
+  pdf:
+    geometry:
+      - top=25mm
+      - bottom=25mm
+      - left=20mm
+      - right=20mm
+execute:
+  echo: false
+---
+
+```{r load_data}
+suppressPackageStartupMessages(library('ggplot2'))
+suppressPackageStartupMessages(library('knitr'))
+suppressPackageStartupMessages(library('dplyr'))
+dat <- readRDS('filt_and_fixed.rds')
+```
+
+```{r fit_model}
+model_eq <- "BLAKMOVE ~ AGE + PSTHNEG + BLKDISCR + CONSRVAT"
+mod_logit <- glm(model_eq, data=dat, family=binomial)
+```
+
+# Model
+
+For this assignment, I am using the same selected 4 covariates as defined in Mini Project 2, but instead of using the Probit link I will use the Logit link. This model is defined below. 
+
+$$
+\begin{aligned}
+Y_i &\sim Bernoulli(\mu_i) \\
+logit(\mu_i) &= ln(\frac{\mu_i}{1-\mu_i}) = \eta_i \\
+\eta_i &= \beta_0 + \beta_1(\text{Age}) + \beta_2(\text{PSTHNEG}) + \beta_3(\text{BLKDISCR}) + \beta_4(\text{CONSRVAT})
+\end{aligned}
+$$
+
+```{r funcs}
+gen_pred_stats <- function(new_data, model) {
+    # Find the predicted response in terms of eta
+    pred <- predict(model, newdata = as.data.frame(new_data), type = "link", se.fit = TRUE)
+
+    # Eta interval
+    crit_val <- 1.96
+    eta_lwr <- pred$fit - (crit_val * pred$se.fit)
+    eta_upr <- pred$fit + (crit_val * pred$se.fit)
+
+    # Get the inverse link
+    inverse_link <- model$family$linkinv
+    
+    # Mu interval
+    pred$pred_prob <- inverse_link(pred$fit)
+    pred$prob_lwr <- inverse_link(eta_lwr)
+    pred$prob_upr <- inverse_link(eta_upr)
+
+    # Odds Interval
+    pred$pred_odds <- exp(pred$fit)
+    pred$odds_lwr <- exp(eta_lwr)
+    pred$odds_upr <- exp(eta_upr)
+
+    # Clean DF
+    pred <- as.data.frame(pred)
+    pred <- round(pred, 3)
+}
+
+```
+
+```{r preds}
+pred_vars <- data.frame(AGE = c(29, 60), PSTHNEG = c(5, 1), BLKDISCR = c(1, 5), CONSRVAT = c(2, 5))
+pred_1 <- gen_pred_stats(pred_vars[1, ], mod_logit)
+pred_2 <- gen_pred_stats(pred_vars[2, ], mod_logit)
+
+# Log-odds ratio
+log_or <- pred_1$fit - pred_2$fit
+# Exponentiate to get the Odds Ratio
+odds_ratio <- round(exp(log_or), 3)
+# Standard Error of the difference
+se_diff <- sqrt(pred_1$se.fit^2 + pred_2$se.fit^2)
+# 95% Confidence Interval for the Odds Ratio
+or_lwr <- round(exp(log_or - 1.96 * se_diff), 3)
+or_upr <- round(exp(log_or + 1.96 * se_diff), 3)
+```
+
+
+The calculated values for the relevant covariate sets are provided in @tbl-preds_with_vals. I chose the covariate values based on 'profiles' of a person heavily leaniing on each side of the expected results (very 'liberal' versus very 'conservative', and another more in the middle). The provided covariate values in the table are, in order: AGE, PSTHNEG, BLKDISCR, CONSRVAT.
+
+```{r tbl-preds_with_vals}
+#| echo: false
+#| message: false
+#| tbl-pos: 'H'
+#| tbl-cap: Table of covariate values with corresponding calculations. Probability and odds refer to probability of moving. 
+
+# Create the data frame cleanly
+my_table <- data.frame(
+  "Covariate Values" = c("29, 5, 1, 2", "60, 1, 5, 5"),
+  "Est. Prob" = 
+    c(paste0(pred_1$pred_prob, " (", pred_1$prob_lwr, ",", pred_1$prob_upr, ")"),
+    paste0(pred_2$pred_prob, " (", pred_2$prob_lwr, ",", pred_2$prob_upr, ")"))
+    ,
+  "Est. Odds" =     
+    c(paste0(pred_1$pred_odds, " (", pred_1$odds_lwr, ",", pred_1$odds_upr, ")"),
+    paste0(pred_2$pred_odds, " (", pred_2$odds_lwr, ",", pred_2$odds_upr, ")")
+    ),
+  "Est. Odds Ratio" = c(odds_ratio, paste0("(", or_lwr, ",", or_upr, ")")),
+  check.names = FALSE # Keeps your column name slashes and newlines intact
+)
+
+# Render natively for LaTeX/PDF with fixed column widths to allow wrapping
+kable(
+  my_table, 
+  format = "latex", 
+  escape = FALSE,
+  align = "lccc",
+  col.names = c("Covariate Values", "Est. Prob", "Est. Odds", "Est. Odds Ratio"),
+  linesep = ""
+)
+```
+
+Examining the values in @tbl-preds_with_vals, we see that the estimated probability of a person where (AGE = 29, PRSTHNEG = 5, BLKDISCR = 1, CONSRVAT = 2), we predict there is an 11.% percent probability that they would move out of their neighborhood in the above scenario. The table also shows there is an odds of .13 of this person moving out of the neighborhood. For a person where (AGE = 60, PRSTHNEG = 1, BLKDISCR = 5, CONSRVAT = 5), we predict there is an 81% chance this person moves out, or an odds of 4.261. 
+
+The Odds Ratio of 0.03 means the odds of person one moving out in the above  scenario are .03 times that of person 2 moving out. We can also "reverse" that and say, given the person moved out, the odds that person 1 moved out because several black families moved into their neighborhood is .03 times that of person 2. 
+
+
+{{< pagebreak >}}
+
+# Appendix: Code
+
+```{r}
+#| echo: true
+#| eval: false
+#| ref.label: !expr knitr::all_labels()
+```
